@@ -14,12 +14,14 @@
 
 struct GameplayData
 {
-    glm::vec2 playerPos = {100,100};
+	glm::vec2 playerPos = {100,100};
 };
+
 
 GameplayData data;
 
 gl2d::Renderer2D renderer;
+
 gl2d::Texture spaceShipTexture;
 gl2d::Texture backgroundTexture;
 
@@ -28,9 +30,10 @@ bool initGame()
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
-   
-	spaceShipTexture.loadFromFile("../resources/spaceShip/ships/green.png",true);
-	spaceShipTexture.loadFromFile("../resources/background1.png",true);
+
+	spaceShipTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true);
+	backgroundTexture.loadFromFile(RESOURCES_PATH "background1.png", true);
+
 	
 	return true;
 }
@@ -51,58 +54,58 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 #pragma region movement
-    glm::vec2 move ={};
+
+	glm::vec2 move = {};
 
 	if (
-		platform::isButtonHeld(platform::Button::W)||
+		platform::isButtonHeld(platform::Button::W) ||
 		platform::isButtonHeld(platform::Button::Up)
-	)
+		)
 	{
 		move.y = -1;
 	}
 	if (
-		platform::isButtonHeld(platform::Button::S)||
+		platform::isButtonHeld(platform::Button::S) ||
 		platform::isButtonHeld(platform::Button::Down)
-	)
+		)
 	{
 		move.y = 1;
 	}
 	if (
-		platform::isButtonHeld(platform::Button::A)||
+		platform::isButtonHeld(platform::Button::A) ||
 		platform::isButtonHeld(platform::Button::Left)
-	)
+		)
 	{
 		move.x = -1;
 	}
 	if (
-		platform::isButtonHeld(platform::Button::D)||
+		platform::isButtonHeld(platform::Button::D) ||
 		platform::isButtonHeld(platform::Button::Right)
-	)
+		)
 	{
 		move.x = 1;
 	}
-	
+
 	if (move.x != 0 || move.y != 0)
 	{
 		move = glm::normalize(move);
-		move *= deltaTime * 200; // 200 pixels per second;
+		move *= deltaTime * 500; //500 pixels per seccond
 		data.playerPos += move;
 	}
-	
-  
 
 #pragma endregion
 
-
 #pragma region render background
+
+
 
 	renderer.renderRectangle({0, 0, 10000, 10000}, backgroundTexture);
 
 #pragma endregion
-   
-    
+
+
 	renderer.currentCamera.follow(data.playerPos, deltaTime * 450, 10, 50, w, h);
-	
+
 	renderer.renderRectangle({data.playerPos, 200, 200}, spaceShipTexture);
 
 
