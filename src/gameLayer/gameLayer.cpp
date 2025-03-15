@@ -22,10 +22,12 @@ GameplayData data;
 
 gl2d::Renderer2D renderer;
 
-gl2d::Texture spaceShipTexture;
-gl2d::Texture backgroundTexture;
+constexpr int BACKGROUNDS = 4;
 
-TiledRenderer tiledRenderer;
+gl2d::Texture spaceShipTexture;
+
+gl2d::Texture backgroundTexture[BACKGROUNDS];
+TiledRenderer tiledRenderer[BACKGROUNDS];
 
 bool initGame()
 {
@@ -34,10 +36,21 @@ bool initGame()
 	renderer.create();
 
 	spaceShipTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true);
-	backgroundTexture.loadFromFile(RESOURCES_PATH "background1.png", true);
+	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
+	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
+	backgroundTexture[2].loadFromFile(RESOURCES_PATH "background3.png", true);
+	backgroundTexture[3].loadFromFile(RESOURCES_PATH "background4.png", true);
 
-	tiledRenderer.texture = backgroundTexture;
-	
+	tiledRenderer[0].texture = backgroundTexture[0];
+	tiledRenderer[1].texture = backgroundTexture[1];
+	tiledRenderer[2].texture = backgroundTexture[2];
+	tiledRenderer[3].texture = backgroundTexture[3];
+
+	tiledRenderer[0].paralaxStrength = 0;
+	tiledRenderer[1].paralaxStrength = 0.2;
+	tiledRenderer[2].paralaxStrength = 0.4;
+	tiledRenderer[3].paralaxStrength = 0.7;
+
 	return true;
 }
 
@@ -45,6 +58,7 @@ bool initGame()
 
 bool gameLogic(float deltaTime)
 {
+
 #pragma region init stuff
 	int w = 0; int h = 0;
 	w = platform::getFrameBufferSizeX(); //window w
@@ -55,6 +69,14 @@ bool gameLogic(float deltaTime)
 
 	renderer.updateWindowMetrics(w, h);
 #pragma endregion
+
+
+#pragma region follow
+
+	renderer.currentCamera.follow(data.playerPos, deltaTime * 1450, 1, 50, w, h);
+
+#pragma endregion
+
 
 #pragma region movement
 
@@ -92,24 +114,56 @@ bool gameLogic(float deltaTime)
 	if (move.x != 0 || move.y != 0)
 	{
 		move = glm::normalize(move);
-		move *= deltaTime * 1000; //500 pixels per seccond
+		move *= deltaTime * 2000; //500 pixels per seccond
 		data.playerPos += move;
 	}
 
 #pragma endregion
 
+
 #pragma region render background
 
 	renderer.currentCamera.zoom = 0.5;
 
-	tiledRenderer.render(renderer);
+	for (int i = 0; i < BACKGROUNDS; i++)
+	{
+		tiledRenderer[i].render(renderer);
+	}
 
 #pragma endregion
 
 
-	renderer.currentCamera.follow(data.playerPos, deltaTime * 450, 10, 50, w, h);
+#pragma region mouse pos
 
-	renderer.renderRectangle({data.playerPos, 200, 200}, spaceShipTexture);
+	glm::vec2 mousePos = platform::getRelMousePosition();
+	glm::vec2 screenCenter(w / 2.f, h / 2.f);
+
+	glm::vec2 mouseDirection = mousePos - screenCenter;
+
+	if (glm::length(mouseDirection) == 0.f)
+	{
+		mouseDirection = {1,0};
+	}
+	else
+	{
+		mouseDirection = normalize(mouseDirection);
+	}
+
+	float spaceShipAngle = atan2(mouseDirection.y, -mouseDirection.x);
+
+#pragma endregion
+
+
+#pragma region render ship
+
+	constexpr float shipSize = 250.f;
+
+	renderer.renderRectangle({data.playerPos - glm::vec2(shipSize/2,shipSize/2)
+		, shipSize,shipSize}, spaceShipTexture,
+		Colors_White, {}, glm::degrees(spaceShipAngle) + 90.f);
+
+#pragma endregion
+
 
 
 	renderer.flush();
